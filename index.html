@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>휘매쓰 연산 챌린지!</title>
+<style>
+    body {
+        font-family: 'Arial', sans-serif;
+        background: #f9f9f9;
+        margin: 0;
+        padding: 0;
+    }
+    .container {
+        width: 800px;
+        margin: 50px auto;
+        padding: 20px;
+        background: #ffffff;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        text-align: center;
+        position: relative;
+    }
+    h1 {
+        margin-bottom: 20px;
+        font-size: 2em;
+        color: #333;
+    }
+    .user-info, .difficulty-select, .quiz-container, .result-container, .popup {
+        display: none;
+    }
+    .user-info {
+        margin-bottom: 20px;
+    }
+    .user-info input {
+        padding: 10px;
+        font-size: 1em;
+    }
+    .user-info button {
+        padding: 10px 20px;
+        margin-left: 10px;
+        background: #4CAF50;
+        border: none;
+        color: white;
+        cursor: pointer;
+        border-radius: 5px;
+        font-size: 1em;
+    }
+    .difficulty-select button {
+        padding: 10px 20px;
+        margin: 10px;
+        background: #4CAF50;
+        border: none;
+        color: white;
+        cursor: pointer;
+        border-radius: 5px;
+        font-size: 1em;
+    }
+    .difficulty-select button:hover {
+        background: #45a049;
+    }
+    .info-bar {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        font-size: 1em;
+    }
+    .info-bar div {
+        margin: 0 10px;
+    }
+    .energy-bar-container {
+        width: 100%;
+        background: #ddd;
+        height: 20px;
+        border-radius: 10px;
+        overflow: hidden;
+        margin-bottom: 20px;
+        position: relative;
+    }
+    .energy-bar {
+        height: 100%;
+        background: #76c7c0;
+        width: 100%;
+        transition: width 0.5s linear;
+    }
+    .quiz-question {
+        font-size: 1.4em;
+        margin-bottom: 20px;
+    }
+    .quiz-answer input {
+        width: 100px;
+        padding: 5px;
+        font-size: 1em;
+        text-align: center;
+    }
+    .quiz-answer button {
+        padding: 10px 20px;
+        margin-left: 10px;
+        background: #2196F3;
+        border: none;
+        color: white;
+        cursor: pointer;
+        border-radius: 5px;
+    }
+    .quiz-answer button:hover {
+        background: #1e87db;
+    }
+    #nextQuestionButton {
+        padding: 10px 20px;
+        margin-top: 20px;
+        background: #FF9800;
+        border: none;
+        color: white;
+        cursor: pointer;
+        border-radius: 5px;
+        font-size: 1em;
+        display: none;
+    }
+    .popup {
+        position: fixed;
+        top: 30%;
+        left: 50%;
+        transform: translate(-50%, -30%);
+        background: #fff;
+        border: 2px solid #333;
+        border-radius: 10px;
+        padding: 20px;
+        width: 400px;
+        z-index: 9999;
+        box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    }
+    .popup h2 {
+        margin-top: 0;
+    }
+    .popup button {
+        background: #333;
+        color: #fff;
+        border: none;
+        padding: 10px;
+        margin-top: 20px;
+        cursor: pointer;
+        border-radius: 5px;
+    }
+    .popup button:hover {
+        background: #555;
+    }
+    .result-container {
+        text-align: center;
+    }
+    .result-container p {
+        font-size: 1.2em;
+    }
+    .result-container button {
+        padding: 10px 20px;
+        margin-top: 20px;
+        background: #4CAF50;
+        border: none;
+        color: white;
+        cursor: pointer;
+        border-radius: 5px;
+        font-size: 1em;
+    }
+    .result-container pre {
+        text-align: left;
+        background: #f0f0f0;
+        padding: 10px;
+        border-radius: 5px;
+        margin-top: 20px;
+        overflow: auto;
+    }
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>휘매쓰 연산 챌린지!</h1>
+
+    <!-- 사용자 이름 입력 -->
+    <div class="user-info">
+        <input type="text" id="userNameInput" placeholder="이름을 입력하세요" />
+        <button id="startButton">시작하기</button>
+    </div>
+
+    <!-- 난이도 선택 -->
+    <div class="difficulty-select">
+        <p>난이도를 선택하세요.</p>
+        <!-- 최상 - 20초, 상-30초, 중-40초, 하-무제한 -->
+        <button data-diff="top">최상 (20초 / 문제당 20점)</button>
+        <button data-diff="high">상 (30초 / 문제당 15점)</button>
+        <button data-diff="mid">중 (40초 / 문제당 13점)</button>
+        <button data-diff="low">하 (시간제한 없음 / 문제당 10점)</button>
+    </div>
+
+    <div class="info-bar">
+        <div class="lives">남은 기회 : 3</div>
+        <div class="score">점수 : 0</div>
+        <div class="total-time">전체 경과 시간 : 0초</div>
+    </div>
+
+    <div class="energy-bar-container">
+        <div class="energy-bar"></div>
+    </div>
+
+    <!-- 문제 영역 -->
+    <div class="quiz-container">
+        <div class="quiz-question"></div>
+        <div class="quiz-answer">
+            <input type="text" placeholder="정답 입력" />
+            <button>확인</button>
+        </div>
+        <button id="nextQuestionButton">다음문제</button>
+    </div>
+
+    <!-- 결과 영역 (게임 종료 후) -->
+    <div class="result-container">
+        <p>게임이 종료되었습니다!</p>
+        <p class="final-score"></p>
+        <button id="transmitButton">전송하기</button>
+        <pre id="response"></pre>
+    </div>
+
+    <div class="popup" id="popup-message">
+        <h2>알림</h2>
+        <div class="popup-content"></div>
+        <button class="popup-close">닫기</button>
+    </div>
+</div>
+
+<script>
+// 문제 데이터 (문제, 해설, 정답)
+const problems = [
+    {question:"(12 + 5) - 4", answer:13, explanation:"(12+5)=17, 17-4=13"},
+    {question:"20 - (7 + 5)", answer:8, explanation:"(7+5)=12, 20-12=8"},
+    {question:"(15 + 8) - (10 + 2)", answer:11, explanation:"(15+8)=23, (10+2)=12, 23-12=11"},
+    {question:"(9 + 9) - 5", answer:13, explanation:"(9+9)=18, 18-5=13"},
+    {question:"30 - (10 + 10)", answer:10, explanation:"(10+10)=20, 30-20=10"},
+    {question:"(25 + 4) - (20 + 1)", answer:8, explanation:"(25+4)=29, (20+1)=21, 29-21=8"},
+    {question:"(17 + 3) - 10", answer:10, explanation:"(17+3)=20, 20-10=10"},
+    {question:"(18 + 2) - (7 + 7)", answer:6, explanation:"(18+2)=20, (7+7)=14, 20-14=6"},
+    {question:"26 - (13 + 8)", answer:5, explanation:"(13+8)=21, 26-21=5"},
+    {question:"(5 + 5) - (2 + 1)", answer:7, explanation:"(5+5)=10, (2+1)=3, 10-3=7"},
+    {question:"(14 + 6) - 5", answer:15, explanation:"(14+6)=20, 20-5=15"},
+    {question:"(10 + 10) - (10 + 1)", answer:9, explanation:"(10+10)=20, (10+1)=11, 20-11=9"},
+    {question:"27 - (12 + 4)", answer:11, explanation:"(12+4)=16, 27-16=11"},
+    {question:"(9 + 1) - (3 + 2)", answer:5, explanation:"(9+1)=10, (3+2)=5, 10-5=5"},
+    {question:"(6 + 6) - 10", answer:2, explanation:"(6+6)=12, 12-10=2"},
+    {question:"(20 + 2) - (15 + 4)", answer:3, explanation:"(20+2)=22, (15+4)=19, 22-19=3"},
+    {question:"(11 + 5) - (10 + 2)", answer:4, explanation:"(11+5)=16, (10+2)=12, 16-12=4"},
+    {question:"(8 + 8) - (10 - 2)", answer:8, explanation:"(8+8)=16, (10-2)=8, 16-8=8"},
+    {question:"(30 - 5) - (10 + 10)", answer:5, explanation:"(30-5)=25, (10+10)=20, 25-20=5"},
+    {question:"(12 + 3) - (4 + 4)", answer:7, explanation:"(12+3)=15, (4+4)=8, 15-8=7"},
+    {question:"(10 + 7) - 5", answer:12, explanation:"(10+7)=17, 17-5=12"},
+    {question:"(25 + 5) - (20 + 3)", answer:7, explanation:"(25+5)=30, (20+3)=23, 30-23=7"},
+    {question:"(15 + 5) - 10", answer:10, explanation:"(15+5)=20, 20-10=10"},
+    {question:"28 - (10 + 9)", answer:9, explanation:"(10+9)=19, 28-19=9"},
+    {question:"(16 + 2) - (10 + 5)", answer:3, explanation:"(16+2)=18, (10+5)=15, 18-15=3"},
+    {question:"(14 + 7) - (5 + 5)", answer:11, explanation:"(14+7)=21, (5+5)=10, 21-10=11"},
+    {question:"(20 + 1) - (10 + 9)", answer:2, explanation:"(20+1)=21, (10+9)=19, 21-19=2"},
+    {question:"(18 + 1) - (5 + 5)", answer:9, explanation:"(18+1)=19, (5+5)=10, 19-10=9"},
+    {question:"(9 + 9) - (17 - 5)", answer:6, explanation:"(9+9)=18, (17-5)=12, 18-12=6"},
+    {question:"(10 + 10) - (5 + 5)", answer:10, explanation:"(10+10)=20, (5+5)=10, 20-10=10"},
+    {question:"(22 - 2) - (10 + 5)", answer:5, explanation:"(22-2)=20, (10+5)=15, 20-15=5"},
+    {question:"(15 + 3) - (12 + 4)", answer:2, explanation:"(15+3)=18, (12+4)=16, 18-16=2"},
+    {question:"(10 + 8) - (9 + 7)", answer:2, explanation:"(10+8)=18, (9+7)=16, 18-16=2"},
+    {question:"(5 + 12) - 10", answer:7, explanation:"(5+12)=17, 17-10=7"},
+    {question:"(13 + 6) - (5 + 5)", answer:9, explanation:"(13+6)=19, (5+5)=10, 19-10=9"},
+    {question:"30 - (10 + 15)", answer:5, explanation:"(10+15)=25, 30-25=5"},
+    {question:"(28 - 8) - (10 + 2)", answer:8, explanation:"(28-8)=20, (10+2)=12, 20-12=8"},
+    {question:"(21 - 1) - (10 + 5)", answer:5, explanation:"(21-1)=20, (10+5)=15, 20-15=5"},
+    {question:"(14 + 4) - (10 + 7)", answer:1, explanation:"(14+4)=18, (10+7)=17, 18-17=1"},
+    {question:"(12 + 12) - (5 + 10)", answer:9, explanation:"(12+12)=24, (5+10)=15, 24-15=9"},
+    {question:"(16 + 3) - (18 - 1)", answer:2, explanation:"(16+3)=19, (18-1)=17, 19-17=2"},
+    {question:"(20 - 5) - (10 + 3)", answer:2, explanation:"(20-5)=15, (10+3)=13, 15-13=2"},
+    {question:"(15 + 10) - (20 - 3)", answer:8, explanation:"(15+10)=25, (20-3)=17, 25-17=8"},
+    {question:"(19 + 1) - (14 + 4)", answer:2, explanation:"(19+1)=20, (14+4)=18, 20-18=2"},
+    {question:"(10 + 9) - (7 + 2)", answer:10, explanation:"(10+9)=19, (7+2)=9, 19-9=10"},
+    {question:"(22 - 10) - (5 + 5)", answer:2, explanation:"(22-10)=12, (5+5)=10, 12-10=2"},
+    {question:"(13 + 7) - (15 - 4)", answer:9, explanation:"(13+7)=20, (15-4)=11, 20-11=9"},
+    {question:"(25 - 5) - (10 + 8)", answer:2, explanation:"(25-5)=20, (10+8)=18, 20-18=2"},
+    {question:"(11 + 8) - (15 - 3)", answer:7, explanation:"(11+8)=19, (15-3)=12, 19-12=7"},
+    {question:"(10 + 5) - (10 - 2)", answer:7, explanation:"(10+5)=15, (10-2)=8, 15-8=7"}
+];
+
+// 전체 세팅 변수
+let difficulty = null; 
+let perProblemTime = null; 
+let scorePerQuestion = null; 
+let unlimitedTime = false;
+let userName = "";
+
+// 기회, 점수, 전체 시간
+let lives = 3;
+let score = 0;
+let totalTime = 0; 
+let totalTimeInterval = null;
+
+// 문제 관리
+let currentIndex = 0; 
+let usedProblems = [...problems]; // 처음 50문제
+let currentProblem = null;
+
+// 문제 시간(에너지바) 관련
+let problemTimeLeft = null; 
+let problemTimer = null;
+
+// DOM 요소
+const userInfoDiv = document.querySelector('.user-info');
+const userNameInput = document.getElementById('userNameInput');
+const startButton = document.getElementById('startButton');
+const difficultySelectDiv = document.querySelector('.difficulty-select');
+const quizContainer = document.querySelector('.quiz-container');
+const resultContainer = document.querySelector('.result-container');
+const questionDiv = document.querySelector('.quiz-question');
+const answerInput = document.querySelector('.quiz-answer input');
+const answerButton = document.querySelector('.quiz-answer button');
+const livesDiv = document.querySelector('.lives');
+const scoreDiv = document.querySelector('.score');
+const totalTimeDiv = document.querySelector('.total-time');
+const energyBar = document.querySelector('.energy-bar');
+const popup = document.getElementById('popup-message');
+const popupContent = popup.querySelector('.popup-content');
+const popupCloseBtn = popup.querySelector('.popup-close');
+const nextQuestionButton = document.getElementById('nextQuestionButton');
+const transmitButton = document.getElementById('transmitButton');
+
+// 사용자 이름 입력 후 시작하기
+startButton.addEventListener('click', () => {
+    userName = userNameInput.value.trim();
+    if(userName === ""){
+        alert("이름을 입력해주세요.");
+        return;
+    }
+    userInfoDiv.style.display = 'none';
+    difficultySelectDiv.style.display = 'block';
+});
+
+// 난이도 버튼 이벤트
+document.querySelectorAll('.difficulty-select button').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const diff = btn.getAttribute('data-diff');
+        if(diff === 'top'){
+            perProblemTime = 20;
+            scorePerQuestion = 20;
+        } else if(diff === 'high'){
+            perProblemTime = 30;
+            scorePerQuestion = 15;
+        } else if(diff === 'mid'){
+            perProblemTime = 40;
+            scorePerQuestion = 13;
+        } else if(diff === 'low'){
+            unlimitedTime = true;
+            perProblemTime = null;
+            scorePerQuestion = 10;
+        }
+        difficulty = diff;
+        startGame();
+    });
+});
+
+function startGame(){
+    difficultySelectDiv.style.display = 'none';
+    quizContainer.style.display = 'block';
+    lives = 3;
+    score = 0;
+    livesDiv.textContent = "남은 기회 : " + lives;
+    scoreDiv.textContent = "점수 : " + score;
+
+    totalTime = 0;
+    clearInterval(totalTimeInterval);
+    totalTimeInterval = setInterval(()=>{
+        totalTime++;
+        totalTimeDiv.textContent = "전체 경과 시간 : " + totalTime + "초";
+    },1000);
+
+    usedProblems = [...problems];
+    nextProblem();
+}
+
+function nextProblem(){
+    if(usedProblems.length === 0){
+        usedProblems = [...problems];
+    }
+    const randomIndex = Math.floor(Math.random() * usedProblems.length);
+    const problem = usedProblems.splice(randomIndex, 1)[0];
+
+    questionDiv.textContent = problem.question;
+    answerInput.value = '';
+    answerInput.disabled = false;
+    answerButton.disabled = false;
+    answerInput.focus();
+    currentProblem = problem;
+
+    if(!unlimitedTime) {
+        problemTimeLeft = perProblemTime;
+        startProblemTimer();
+    } else {
+        energyBar.style.width = "100%";
+    }
+}
+
+function startProblemTimer(){
+    clearInterval(problemTimer);
+    updateEnergyBar();
+    problemTimer = setInterval(()=>{
+        problemTimeLeft--;
+        updateEnergyBar();
+        if(problemTimeLeft <= 0){
+            clearInterval(problemTimer);
+            wrongAnswerTimeOut();
+        }
+    },1000);
+}
+
+function updateEnergyBar(){
+    if(unlimitedTime) {
+        energyBar.style.width = "100%";
+    } else {
+        const widthPercent = (problemTimeLeft / perProblemTime) * 100;
+        energyBar.style.width = widthPercent + "%";
+    }
+}
+
+answerButton.addEventListener('click', checkAnswer);
+answerInput.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter') checkAnswer();
+});
+
+function checkAnswer(){
+    const userAns = parseInt(answerInput.value, 10);
+    if(isNaN(userAns)) return;
+    clearInterval(problemTimer);
+    answerInput.disabled = true;
+    answerButton.disabled = true;
+
+    if(userAns === currentProblem.answer){
+        score += scorePerQuestion;
+        scoreDiv.textContent = "점수 : " + score;
+        checkRandomReward();
+        nextQuestionButton.style.display = "inline-block";
+    } else {
+        lives--;
+        livesDiv.textContent = "남은 기회 : " + lives;
+        showPopup("오답입니다! 정답: " + currentProblem.answer + "<br>풀이: " + currentProblem.explanation);
+        if(lives <= 0){
+            endGame();
+        } else {
+            nextQuestionButton.style.display = "inline-block";
+        }
+    }
+}
+
+function wrongAnswerTimeOut(){
+    lives--;
+    livesDiv.textContent = "남은 기회 : " + lives;
+    showPopup("시간 초과! 정답: " + currentProblem.answer + "<br>풀이: " + currentProblem.explanation);
+    if(lives <= 0){
+        endGame();
+    } else {
+        nextQuestionButton.style.display = "inline-block";
+    }
+}
+
+nextQuestionButton.addEventListener('click', () => {
+    nextQuestionButton.style.display = "none";
+    nextProblem();
+});
+
+function endGame(){
+    clearInterval(problemTimer);
+    clearInterval(totalTimeInterval);
+    quizContainer.style.display = 'none';
+    resultContainer.style.display = 'block';
+    resultContainer.querySelector('.final-score').textContent = "최종 점수: " + score;
+}
+
+popupCloseBtn.addEventListener('click', () => {
+    popup.style.display = 'none';
+});
+
+function showPopup(msg){
+    popupContent.innerHTML = msg;
+    popup.style.display = 'block';
+}
+
+function checkRandomReward(){
+    const rand = Math.random();
+    if(rand < 1/10000){ 
+        showPopup("축하합니다! 5000원 상품권 당첨!");
+    } else if(rand < 1/1000){ 
+        showPopup("축하합니다! 3000원 상품권 당첨!");
+    } else if(rand < 1/500) {
+        lives++;
+        livesDiv.textContent = "남은 기회 : " + lives;
+        showPopup("축하합니다! 1회 면제권 획득! 남은 기회 1 증가");
+    }
+}
+
+transmitButton.addEventListener('click', () => {
+    saveData("휘매쓰 연산 챌린지!", userName, score, totalTime);
+});
+
+// 서버 데이터 전송 함수 (수정됨)
+async function saveData(game, name, score, elapsedTime) {
+    const FUNCTION_URL = "https://us-central1-record-f420d.cloudfunctions.net/report";
+
+    const requestData = {
+        game,
+        name,
+        score: parseInt(score, 10),
+        elapsedTime: parseInt(elapsedTime, 10)
+    };
+
+    try {
+        const response = await fetch(FUNCTION_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestData)
+        });
+        const responseData = await response.json();
+        if(response.ok) {
+            document.getElementById('response').innerText = `성공: ${JSON.stringify(responseData, null, 2)}`;
+        } else {
+            document.getElementById('response').innerText = `오류: ${JSON.stringify(responseData, null, 2)}`;
+        }
+    } catch (error) {
+        console.error('요청 실패:', error);
+        document.getElementById('response').innerText = `네트워크 오류: ${error.message}`;
+    }
+}
+
+// 초기 화면 표시
+userInfoDiv.style.display = 'block';
+</script>
+</body>
+</html>
